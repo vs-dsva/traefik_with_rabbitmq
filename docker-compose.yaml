@@ -1,0 +1,46 @@
+version: '3'
+services:
+  server:
+    build:
+      context: server
+    depends_on:
+      - proxy
+    hostname: stomp-server
+    volumes:
+      - "./server/11-stomp.conf:/etc/rabbitmq/conf.d/11-stomp.conf"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rabbitmq.rule=Host(`stomp-server.docker`)"
+      - "traefik.http.routers.rabbitmq.entrypoints=web"
+      - "traefik.http.routers.rabbitmq.service=rabbitmq"
+      - "traefik.http.services.rabbitmq.loadbalancer.server.port=61613"
+      - "traefik.tcp.routers.ingress.rule=HostSNI(`*`)"
+      #- "traefik.tcp.routers.ingress.rule=HostSNI(`ingress.docker`)"
+      - "traefik.tcp.routers.ingress.entrypoints=rabbitmq"
+      #- "traefik.tcp.routers.ingress.tls=true"
+      #- "traefik.tcp.routers.ingress.tls.passthrough=true"
+      - "traefik.tcp.services.ingress.loadbalancer.server.port=61613"
+  
+  client:
+    build:
+      context: client
+    depends_on:
+      - server
+
+  proxy:
+    image: traefik
+    hostname: gateway
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.rabbitmq.address=:61613"
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "61613:61613"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    
