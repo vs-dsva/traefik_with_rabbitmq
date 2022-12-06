@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert
+    kompose.version: 1.21.0 (992df58d8)
+    traefik.enable: "true"
+    traefik.http.routers.rabbitmq.entrypoints: web
+    traefik.http.routers.rabbitmq.rule: Host(`stomp-server.docker`)
+    traefik.http.routers.rabbitmq.service: rabbitmq
+    traefik.http.services.rabbitmq.loadbalancer.server.port: "61613"
+    traefik.tcp.routers.ingress.entrypoints: rabbitmq
+    traefik.tcp.routers.ingress.rule: HostSNI(`*`)
+    traefik.tcp.services.ingress.loadbalancer.server.port: "61613"
+  creationTimestamp: null
+  labels:
+    io.kompose.service: server
+  name: server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert
+        kompose.version: 1.21.0 (992df58d8)
+        traefik.enable: "true"
+        traefik.http.routers.rabbitmq.entrypoints: web
+        traefik.http.routers.rabbitmq.rule: Host(`stomp-server.docker`)
+        traefik.http.routers.rabbitmq.service: rabbitmq
+        traefik.http.services.rabbitmq.loadbalancer.server.port: "61613"
+        traefik.tcp.routers.ingress.entrypoints: rabbitmq
+        traefik.tcp.routers.ingress.rule: HostSNI(`*`)
+        traefik.tcp.services.ingress.loadbalancer.server.port: "61613"
+      creationTimestamp: null
+      labels:
+        io.kompose.service: server
+    spec:
+      containers:
+      - image: server
+        imagePullPolicy: ""
+        name: server
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/rabbitmq/conf.d/11-stomp.conf
+          name: server-claim0
+      hostname: stomp-server
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: server-claim0
+        persistentVolumeClaim:
+          claimName: server-claim0
+status: {}

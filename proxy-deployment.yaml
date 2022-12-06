@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: proxy
+  name: proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: proxy
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: proxy
+    spec:
+      containers:
+      - args:
+        - --log.level=DEBUG
+        - --api.insecure=true
+        - --providers.docker=true
+        - --providers.docker.exposedbydefault=false
+        - --entrypoints.web.address=:80
+        - --entrypoints.rabbitmq.address=:61613
+        image: traefik
+        imagePullPolicy: ""
+        name: proxy
+        ports:
+        - containerPort: 80
+        - containerPort: 8080
+        - containerPort: 61613
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: proxy-claim0
+          readOnly: true
+      hostname: gateway
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: proxy-claim0
+        persistentVolumeClaim:
+          claimName: proxy-claim0
+          readOnly: true
+status: {}
